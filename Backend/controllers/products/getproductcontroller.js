@@ -3,10 +3,11 @@ const ProductCollection = require("../../models/ProductSchema");
 
 const getproductcontroller = async (req, res) => {
   try {
-    const { category, name, subcategory } = req.params;
+    const { category, name, subcategory,id } = req.params;
     let products;
     if (category) {
       const searchcategory = category.toLowerCase();
+      // console.log(category)
       products = await ProductCollection.find({
         category: { $regex: new RegExp(searchcategory, "i") },
       });
@@ -15,13 +16,33 @@ const getproductcontroller = async (req, res) => {
       products = await ProductCollection.find({
         name: { $regex: new RegExp(searchName, "i") },
       });
-    } else if (subcategory) {
+    }
+     else if (subcategory) {
       const searchsubcategory = subcategory.toLowerCase();
       products = await ProductCollection.find({
         sub_category: { $regex: new RegExp(searchsubcategory, "i") },
       });
-    } else {
-      const product = await ProductCollection.find();
+    }
+     else if (req.path.includes("/random")) {
+ 
+      products = await ProductCollection.aggregate([
+      { $sample:{size:9,}}
+      ])
+     }
+     else if (req.path.includes("/top-rated")) {
+ 
+      products = await ProductCollection.find().sort({
+        rating:-1
+      }).limit(9);
+      
+     }
+     else if (id) {
+      products  = await ProductCollection.find({
+       _id : id
+      });
+    }
+     else {
+      products = await ProductCollection.find();
       console.log("Product fetched successfully");
     }
     if (!products || products.length === 0)
